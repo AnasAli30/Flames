@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Flames Auth</title>
+<style>
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: #181818;
+  overflow: hidden;
+}
+.flames-text-background {
+  position: fixed;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+  pointer-events: none;
+}
+.flames-text {
+  position: absolute;
+  color: #ff9800cc;
+  font-size: 2.5vw;
+  font-weight: bold;
+  opacity: 0.12;
+  user-select: none;
+  filter: blur(0.5px);
+  animation: floatText 6s linear infinite alternate;
+}
+@keyframes floatText {
+  0% { transform: translateY(0) scale(1);}
+  100% { transform: translateY(-20px) scale(1.05);}
+}
+.flame-logo {
+  position: absolute;
+  font-size: 2.8vw;
+  filter: drop-shadow(0 0 8px #ff9800cc);
+  opacity: 0.7;
+  animation: flicker 1.2s infinite alternate;
+  z-index: 1;
+  pointer-events: none;
+}
+@keyframes flicker {
+  0% { filter: drop-shadow(0 0 8px #ff9800cc);}
+  50% { filter: drop-shadow(0 0 16px #ff9800);}
+  100% { filter: drop-shadow(0 0 8px #ff9800cc);}
+}
+.container {
+  position: relative;
+  z-index: 2;
+  margin: 7vh auto 0 auto;
+  max-width: 340px;
+  background: rgba(30,30,30,0.95);
+  border-radius: 18px;
+  box-shadow: 0 8px 32px #000a;
+  padding: 2.5rem 2rem 2rem 2rem;
+  text-align: center;
+  animation: fadeIn 0.7s cubic-bezier(.4,0,.2,1);
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(30px);}
+  to { opacity: 1; transform: translateY(0);}
+}
+h1 {
+  color: #ff9800;
+  letter-spacing: 0.2em;
+  margin-bottom: 0.2em;
+  font-size: 2.2rem;
+}
+h2 {
+  color: #fff;
+  font-size: 1.2rem;
+  margin-bottom: 1.2em;
+  font-weight: 400;
+}
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1em;
+}
+input[type="email"], input[type="password"] {
+  padding: 0.8em 1em;
+  border: none;
+  border-radius: 8px;
+  background: #232323;
+  color: #fff;
+  font-size: 1rem;
+  transition: background 0.2s;
+  outline: none;
+}
+input:focus {
+  background: #292929;
+}
+button[type="submit"] {
+  background: linear-gradient(90deg, #ff9800 60%, #ff5722 100%);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.8em 0;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 2px 8px #ff980033;
+  transition: background 0.18s, transform 0.13s;
+}
+button[type="submit"]:hover {
+  background: linear-gradient(90deg, #ffb300 60%, #ff7043 100%);
+  transform: scale(1.04);
+}
+.toggle-link {
+  margin-top: 1.2em;
+  font-size: 0.98em;
+}
+.toggle-link a {
+  color: #ff9800;
+  text-decoration: none;
+  transition: color 0.15s;
+}
+.toggle-link a:hover {
+  color: #fff;
+  text-decoration: underline;
+}
+.sr-only {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+</style>
+</head>
+<body>
+
+<!-- Flames scattered "FLAME" text background -->
+<div class="flames-text-background" id="flames-bg"></div>
+
+<!-- Flame emoji logos -->
+<div id="flame-logos"></div>
+
+<!-- Authentication Container -->
+<main class="container" id="auth-container" role="main" aria-label="Authentication Form">
+  <h1>FLAMES</h1>
+  <h2 id="form-title">Login</h2>
+  <form id="auth-form" novalidate>
+    <label for="email" class="sr-only">Email</label>
+    <input type="email" id="email" name="email" placeholder="Email" required autocomplete="email" />
+    
+    <label for="password" class="sr-only">Password</label>
+    <input type="password" id="password" name="password" placeholder="Password" required autocomplete="current-password" />
+    
+    <button type="submit" id="submit-btn" aria-live="polite">Log In</button>
+  </form>
+  <p class="toggle-link">
+    <a href="#" id="toggle-link" role="button" aria-pressed="false">Don't have an account? Sign Up</a>
+  </p>
+</main>
+
+<script>
+function randomBetween(a, b) {
+  return a + Math.random() * (b - a);
+}
+
+// Generate random FLAME texts
+const flamesBg = document.getElementById('flames-bg');
+flamesBg.innerHTML = '';
+for (let i = 0; i < 8; i++) {
+  const div = document.createElement('div');
+  div.className = 'flames-text';
+  div.textContent = 'FLAME';
+  div.style.top = randomBetween(8, 85) + '%';
+  div.style.left = randomBetween(10, 85) + '%';
+  div.style.fontSize = randomBetween(2, 4) + 'vw';
+  div.style.opacity = randomBetween(0.09, 0.16);
+  div.style.animationDelay = (Math.random() * 2).toFixed(2) + 's';
+  flamesBg.appendChild(div);
+}
+
+// Generate random flame logos
+const flameLogos = document.getElementById('flame-logos');
+flameLogos.innerHTML = '';
+for (let i = 0; i < 5; i++) {
+  const div = document.createElement('div');
+  div.className = 'flame-logo';
+  div.textContent = '🔥';
+  const side = Math.random() > 0.5 ? 'left' : 'right';
+  div.style[side] = randomBetween(8, 80) + '%';
+  div.style.top = randomBetween(5, 80) + '%';
+  div.style.fontSize = randomBetween(2.2, 3.2) + 'vw';
+  div.style.animationDelay = (Math.random() * 1.2).toFixed(2) + 's';
+  flameLogos.appendChild(div);
+}
+
+// Toggle Login/Signup
+const toggleLink = document.getElementById('toggle-link');
+const formTitle = document.getElementById('form-title');
+const submitBtn = document.getElementById('submit-btn');
+let isLogin = true;
+toggleLink.addEventListener('click', e => {
+  e.preventDefault();
+  isLogin = !isLogin;
+  formTitle.textContent = isLogin ? 'Login' : 'Sign Up';
+  submitBtn.textContent = isLogin ? 'Log In' : 'Sign Up';
+  toggleLink.textContent = isLogin ? "Don't have an account? Sign Up" : "Already have an account? Log In";
+  toggleLink.setAttribute('aria-pressed', (!isLogin).toString());
+});
+</script>
+</body>
+</html>
