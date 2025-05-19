@@ -233,6 +233,36 @@ const toCodeInput = document.getElementById('to-code');
 const msgTextInput = document.getElementById('msg-text');
 const sendMsgFeedback = document.getElementById('send-msg-feedback');
 
+let session = {
+  token: localStorage.getItem('token') || null,
+  privateKey: localStorage.getItem('privateKey') || null,
+  code: localStorage.getItem('userCode') || null,
+  email: localStorage.getItem('userEmail') || null
+};
+
+function saveSession(token, privateKey, code, email) {
+  session.token = token;
+  session.privateKey = privateKey;
+  session.code = code;
+  session.email = email;
+  localStorage.setItem('token', token);
+  localStorage.setItem('privateKey', privateKey);
+  localStorage.setItem('userCode', code);
+  localStorage.setItem('userEmail', email);
+}
+
+function clearSession() {
+  session = { token: null, privateKey: null, code: null, email: null };
+  localStorage.removeItem('token');
+  localStorage.removeItem('privateKey');
+  localStorage.removeItem('userCode');
+  localStorage.removeItem('userEmail');
+}
+
+function isLoggedIn() {
+  return !!session.token;
+}
+
 function showLogin() {
   isLogin = true;
   formTitle.textContent = 'Login';
@@ -268,6 +298,14 @@ function showDashboard() {
   feedback.textContent = '';
   signupSuccess.style.display = 'none';
   fetchMessages();
+  let userInfo = document.getElementById('user-info');
+  if (!userInfo) {
+    userInfo = document.createElement('div');
+    userInfo.id = 'user-info';
+    userInfo.style.marginBottom = '1em';
+    dashboard.insertBefore(userInfo, dashboard.firstChild.nextSibling);
+  }
+  userInfo.innerHTML = `<b>Logged in as:</b> ${session.email || ''} <br><b>Code:</b> ${session.code || ''}`;
 }
 
 function showAuthForm() {
@@ -280,33 +318,37 @@ function showAuthForm() {
 }
 
 function decryptMessage(encryptedAESKey, encryptedMessage) {
-  const privateKeyPem = localStorage.getItem('privateKey');
+  const privateKeyPem = session.privateKey;
   if (!privateKeyPem) return '[No private key]';
   try {
-    const privateKey = forge.pki.privateKeyFromPem(privateKeyPem);
-    const aesKeyBytes = privateKey.decrypt(forge.util.decode64(encryptedAESKey), 'RSA-OAEP');
-    // For demo: use a fixed IV of 16 zero bytes
-    const iv = new Uint8Array(16);
-    const decipher = forge.cipher.createDecipher('AES-CBC', aesKeyBytes);
-    decipher.start({ iv: forge.util.createBuffer(iv) });
-    decipher.update(forge.util.createBuffer(forge.util.decode64(encryptedMessage)));
+    const privKey = forge.pki.privateKeyFromPem(privateKeyPem);
+    const aesKey = privKey.decrypt(
+      forge.util.decode64(encryptedAESKey),
+      'RSA-OAEP',
+    );
+    const encryptedBytes = forge.util.decode64(encryptedMessage);
+    // Get IV (first 16 bytes) and ciphertext (rest)
+    const iv = encryptedBytes.slice(0, 16);
+    const encrypted = encryptedBytes.slice(16);
+    const decipher = forge.cipher.createDecipher('AES-CBC', aesKey);
+    decipher.start({iv});
+    decipher.update(forge.util.createBuffer(encrypted));
     decipher.finish();
     return decipher.output.toString();
-  } catch (e) {
+  } catch {
     return '[Decryption failed]';
   }
 }
 
 async function fetchMessages() {
   messagesList.textContent = 'Loading messages...';
-  const token = localStorage.getItem('token');
-  if (!token) {
+  if (!session.token) {
     messagesList.textContent = 'No token found.';
     return;
   }
   try {
     const res = await fetch('http://localhost:5000/message-history', {
-      headers: { 'Authorization': 'Bearer ' + token }
+      headers: { 'Authorization': 'Bearer ' + session.token }
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || 'Failed to fetch messages.');
@@ -324,7 +366,7 @@ async function fetchMessages() {
 
 if (logoutBtn) {
   logoutBtn.onclick = function() {
-    localStorage.removeItem('token');
+    clearSession();
     showAuthForm();
   };
 }
@@ -340,32 +382,27 @@ if (sendMsgForm) {
       return;
     }
     try {
-      // 1. Fetch recipient's public key
       const pubRes = await fetch(`http://localhost:5000/public-key/${to}`);
       const pubData = await pubRes.json();
       if (!pubRes.ok) throw new Error(pubData.message || 'Failed to get public key.');
       const publicKeyPem = pubData.publicKey;
       const publicKey = forge.pki.publicKeyFromPem(publicKeyPem);
-      // 2. Generate random AES key and IV
-      const aesKey = forge.random.getBytesSync(32); // 256-bit
-      const iv = forge.random.getBytesSync(16); // 128-bit
-      // 3. Encrypt message with AES
+      const aesKey = forge.random.getBytesSync(32);
+      const iv = forge.random.getBytesSync(16);
       const cipher = forge.cipher.createCipher('AES-CBC', aesKey);
       cipher.start({ iv: iv });
       cipher.update(forge.util.createBuffer(message, 'utf8'));
       cipher.finish();
       const encryptedMessage = forge.util.encode64(cipher.output.getBytes());
-      // 4. Encrypt AES key with recipient's public key
       const encryptedAESKey = forge.util.encode64(publicKey.encrypt(aesKey, 'RSA-OAEP'));
-      // 5. Send message (include IV as base64 for real security)
-      const token = localStorage.getItem('token');
+      const ivBase64 = forge.util.encode64(iv);
       const res = await fetch('http://localhost:5000/send-message', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + token
+          'Authorization': 'Bearer ' + session.token
         },
-        body: JSON.stringify({ to, encryptedMessage, encryptedAESKey })
+        body: JSON.stringify({ to, encryptedMessage, encryptedAESKey, iv: ivBase64 })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Failed to send message.');
@@ -381,6 +418,15 @@ if (sendMsgForm) {
   };
 }
 
+// On page load, show dashboard if session exists
+window.addEventListener('DOMContentLoaded', function() {
+  if (isLoggedIn()) {
+    showDashboard();
+  } else {
+    showAuthForm();
+  }
+});
+
 // Patch login success to show dashboard
 const originalAuthFormSubmit = authForm.onsubmit;
 authForm.addEventListener('submit', async e => {
@@ -388,7 +434,6 @@ authForm.addEventListener('submit', async e => {
   feedback.textContent = '';
   signupSuccess.style.display = 'none';
   if (isLogin) {
-    // Login logic
     const code = document.getElementById('login-code').value.trim();
     const password = document.getElementById('login-password').value;
     if (!code || !password) {
@@ -405,11 +450,10 @@ authForm.addEventListener('submit', async e => {
       if (!res.ok) throw new Error(data.message || 'Login failed.');
       feedback.style.color = '#4caf50';
       feedback.textContent = 'Login successful!';
-      localStorage.setItem('token', data.token);
       if (data.user && data.user.privateKey) {
-        localStorage.setItem('privateKey', data.user.privateKey);
+        saveSession(data.token, data.user.privateKey, data.user.code, data.user.email);
       }
-      setTimeout(showDashboard, 500); // Show dashboard after short delay
+      setTimeout(showDashboard, 500);
     } catch (err) {
       feedback.style.color = '#ff9800';
       feedback.textContent = err.message;
