@@ -145,14 +145,29 @@ button[type="submit"]:hover {
   <h1>FLAMES</h1>
   <h2 id="form-title">Login</h2>
   <form id="auth-form" novalidate>
-    <label for="email" class="sr-only">Email</label>
-    <input type="email" id="email" name="email" placeholder="Email" required autocomplete="email" />
-    
-    <label for="password" class="sr-only">Password</label>
-    <input type="password" id="password" name="password" placeholder="Password" required autocomplete="current-password" />
-    
+    <div id="signup-fields" style="display:none">
+      <label for="signup-email" class="sr-only">Email</label>
+      <input type="email" id="signup-email" name="signup-email" placeholder="Email" autocomplete="email" />
+      <label for="signup-phone" class="sr-only">Phone</label>
+      <input type="tel" id="signup-phone" name="signup-phone" placeholder="Phone" autocomplete="tel" />
+      <label for="signup-password" class="sr-only">Password</label>
+      <input type="password" id="signup-password" name="signup-password" placeholder="Password" autocomplete="new-password" />
+    </div>
+    <div id="login-fields">
+      <label for="login-code" class="sr-only">Code</label>
+      <input type="text" id="login-code" name="login-code" placeholder="Code" autocomplete="username" />
+      <label for="login-password" class="sr-only">Password</label>
+      <input type="password" id="login-password" name="login-password" placeholder="Password" autocomplete="current-password" />
+    </div>
     <button type="submit" id="submit-btn" aria-live="polite">Log In</button>
   </form>
+  <div id="feedback" style="margin-top:1em;color:#ff9800;"></div>
+  <div id="signup-success" style="display:none;margin-top:1em;text-align:left;"></div>
+  <div id="dashboard" style="display:none;margin-top:2em;text-align:left;">
+    <h2>Dashboard</h2>
+    <button id="logout-btn" style="margin-bottom:1em;">Logout</button>
+    <div id="messages-list">Loading messages...</div>
+  </div>
   <p class="toggle-link">
     <a href="#" id="toggle-link" role="button" aria-pressed="false">Don't have an account? Sign Up</a>
   </p>
@@ -198,13 +213,148 @@ const toggleLink = document.getElementById('toggle-link');
 const formTitle = document.getElementById('form-title');
 const submitBtn = document.getElementById('submit-btn');
 let isLogin = true;
+const authForm = document.getElementById('auth-form');
+const signupFields = document.getElementById('signup-fields');
+const loginFields = document.getElementById('login-fields');
+const feedback = document.getElementById('feedback');
+const signupSuccess = document.getElementById('signup-success');
+const dashboard = document.getElementById('dashboard');
+const messagesList = document.getElementById('messages-list');
+const logoutBtn = document.getElementById('logout-btn');
+
+function showLogin() {
+  isLogin = true;
+  formTitle.textContent = 'Login';
+  submitBtn.textContent = 'Log In';
+  toggleLink.textContent = "Don't have an account? Sign Up";
+  toggleLink.setAttribute('aria-pressed', 'false');
+  signupFields.style.display = 'none';
+  loginFields.style.display = '';
+  feedback.textContent = '';
+  signupSuccess.style.display = 'none';
+}
+function showSignup() {
+  isLogin = false;
+  formTitle.textContent = 'Sign Up';
+  submitBtn.textContent = 'Sign Up';
+  toggleLink.textContent = 'Already have an account? Log In';
+  toggleLink.setAttribute('aria-pressed', 'true');
+  signupFields.style.display = '';
+  loginFields.style.display = 'none';
+  feedback.textContent = '';
+  signupSuccess.style.display = 'none';
+}
+showLogin();
 toggleLink.addEventListener('click', e => {
   e.preventDefault();
-  isLogin = !isLogin;
-  formTitle.textContent = isLogin ? 'Login' : 'Sign Up';
-  submitBtn.textContent = isLogin ? 'Log In' : 'Sign Up';
-  toggleLink.textContent = isLogin ? "Don't have an account? Sign Up" : "Already have an account? Log In";
-  toggleLink.setAttribute('aria-pressed', (!isLogin).toString());
+  isLogin ? showSignup() : showLogin();
+});
+
+function showDashboard() {
+  authForm.style.display = 'none';
+  document.getElementById('form-title').style.display = 'none';
+  dashboard.style.display = '';
+  feedback.textContent = '';
+  signupSuccess.style.display = 'none';
+  fetchMessages();
+}
+
+function showAuthForm() {
+  authForm.style.display = '';
+  document.getElementById('form-title').style.display = '';
+  dashboard.style.display = 'none';
+  feedback.textContent = '';
+  signupSuccess.style.display = 'none';
+  showLogin();
+}
+
+async function fetchMessages() {
+  messagesList.textContent = 'Loading messages...';
+  const token = localStorage.getItem('token');
+  if (!token) {
+    messagesList.textContent = 'No token found.';
+    return;
+  }
+  try {
+    const res = await fetch('http://localhost:5000/message-history', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Failed to fetch messages.');
+    if (!data.messages || !data.messages.length) {
+      messagesList.textContent = 'No messages.';
+      return;
+    }
+    messagesList.innerHTML = '<ul style="padding-left:1em;">' + data.messages.map(msg =>
+      `<li><b>From:</b> ${msg.from || 'You'}<br><b>Encrypted:</b> ${msg.encryptedMessage}<br><b>Time:</b> ${new Date(msg.timestamp).toLocaleString()}</li><hr>`
+    ).join('') + '</ul>';
+  } catch (err) {
+    messagesList.textContent = err.message;
+  }
+}
+
+if (logoutBtn) {
+  logoutBtn.onclick = function() {
+    localStorage.removeItem('token');
+    showAuthForm();
+  };
+}
+
+// Patch login success to show dashboard
+const originalAuthFormSubmit = authForm.onsubmit;
+authForm.addEventListener('submit', async e => {
+  e.preventDefault();
+  feedback.textContent = '';
+  signupSuccess.style.display = 'none';
+  if (isLogin) {
+    // Login logic
+    const code = document.getElementById('login-code').value.trim();
+    const password = document.getElementById('login-password').value;
+    if (!code || !password) {
+      feedback.textContent = 'Please enter code and password.';
+      return;
+    }
+    try {
+      const res = await fetch('http://localhost:5000/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, password })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Login failed.');
+      feedback.style.color = '#4caf50';
+      feedback.textContent = 'Login successful!';
+      localStorage.setItem('token', data.token);
+      setTimeout(showDashboard, 500); // Show dashboard after short delay
+    } catch (err) {
+      feedback.style.color = '#ff9800';
+      feedback.textContent = err.message;
+    }
+  } else {
+    // Signup logic
+    const email = document.getElementById('signup-email').value.trim();
+    const phone = document.getElementById('signup-phone').value.trim();
+    const password = document.getElementById('signup-password').value;
+    if (!email || !phone || !password) {
+      feedback.textContent = 'Please fill all fields.';
+      return;
+    }
+    try {
+      const res = await fetch('http://localhost:5000/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, phone, password })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Signup failed.');
+      signupSuccess.style.display = '';
+      signupSuccess.innerHTML = `<b>Registration successful!</b><br>Your code: <code>${data.code}</code><br><img src="${data.qr}" alt="QR Code" style="margin-top:0.5em;max-width:120px;"><br><small>Save your code and QR for login.</small>`;
+      feedback.textContent = '';
+    } catch (err) {
+      feedback.style.color = '#ff9800';
+      feedback.textContent = err.message;
+    }
+  }
 });
 </script>
 </body>
