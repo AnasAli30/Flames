@@ -393,16 +393,16 @@ if (sendMsgForm) {
       cipher.start({ iv: iv });
       cipher.update(forge.util.createBuffer(message, 'utf8'));
       cipher.finish();
-      const encryptedMessage = forge.util.encode64(cipher.output.getBytes());
+      const ciphertext = cipher.output.getBytes();
+      const encryptedMessage = forge.util.encode64(iv + ciphertext); // Prepend IV to ciphertext
       const encryptedAESKey = forge.util.encode64(publicKey.encrypt(aesKey, 'RSA-OAEP'));
-      const ivBase64 = forge.util.encode64(iv);
       const res = await fetch('http://localhost:5000/send-message', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ' + session.token
         },
-        body: JSON.stringify({ to, encryptedMessage, encryptedAESKey, iv: ivBase64 })
+        body: JSON.stringify({ to, encryptedMessage, encryptedAESKey })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Failed to send message.');
