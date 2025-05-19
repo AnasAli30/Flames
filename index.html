@@ -173,6 +173,7 @@ button[type="submit"]:hover {
   </p>
 </main>
 
+<script src="https://cdn.jsdelivr.net/npm/node-forge@1.3.1/dist/forge.min.js"></script>
 <script>
 function randomBetween(a, b) {
   return a + Math.random() * (b - a);
@@ -268,6 +269,24 @@ function showAuthForm() {
   showLogin();
 }
 
+function decryptMessage(encryptedAESKey, encryptedMessage) {
+  const privateKeyPem = localStorage.getItem('privateKey');
+  if (!privateKeyPem) return '[No private key]';
+  try {
+    const privateKey = forge.pki.privateKeyFromPem(privateKeyPem);
+    const aesKeyBytes = privateKey.decrypt(forge.util.decode64(encryptedAESKey), 'RSA-OAEP');
+    // For demo: use a fixed IV of 16 zero bytes
+    const iv = new Uint8Array(16);
+    const decipher = forge.cipher.createDecipher('AES-CBC', aesKeyBytes);
+    decipher.start({ iv: forge.util.createBuffer(iv) });
+    decipher.update(forge.util.createBuffer(forge.util.decode64(encryptedMessage)));
+    decipher.finish();
+    return decipher.output.toString();
+  } catch (e) {
+    return '[Decryption failed]';
+  }
+}
+
 async function fetchMessages() {
   messagesList.textContent = 'Loading messages...';
   const token = localStorage.getItem('token');
@@ -286,7 +305,7 @@ async function fetchMessages() {
       return;
     }
     messagesList.innerHTML = '<ul style="padding-left:1em;">' + data.messages.map(msg =>
-      `<li><b>From:</b> ${msg.from || 'You'}<br><b>Encrypted:</b> ${msg.encryptedMessage}<br><b>Time:</b> ${new Date(msg.timestamp).toLocaleString()}</li><hr>`
+      `<li><b>From:</b> ${msg.from || 'You'}<br><b>Encrypted:</b> ${msg.encryptedMessage}<br><b>Decrypted:</b> ${decryptMessage(msg.encryptedAESKey, msg.encryptedMessage)}<br><b>Time:</b> ${new Date(msg.timestamp).toLocaleString()}</li><hr>`
     ).join('') + '</ul>';
   } catch (err) {
     messagesList.textContent = err.message;
@@ -325,6 +344,9 @@ authForm.addEventListener('submit', async e => {
       feedback.style.color = '#4caf50';
       feedback.textContent = 'Login successful!';
       localStorage.setItem('token', data.token);
+      if (data.user && data.user.privateKey) {
+        localStorage.setItem('privateKey', data.user.privateKey);
+      }
       setTimeout(showDashboard, 500); // Show dashboard after short delay
     } catch (err) {
       feedback.style.color = '#ff9800';
