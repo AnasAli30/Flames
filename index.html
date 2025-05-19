@@ -166,6 +166,12 @@ button[type="submit"]:hover {
   <div id="dashboard" style="display:none;margin-top:2em;text-align:left;">
     <h2>Dashboard</h2>
     <button id="logout-btn" style="margin-bottom:1em;">Logout</button>
+    <form id="send-msg-form" style="margin-bottom:1em;">
+      <input type="text" id="to-code" placeholder="Recipient Code" required style="margin-right:0.5em;" />
+      <input type="text" id="msg-text" placeholder="Message" required style="margin-right:0.5em;" />
+      <button type="submit">Send</button>
+    </form>
+    <div id="send-msg-feedback" style="color:#ff9800;margin-bottom:1em;"></div>
     <div id="messages-list">Loading messages...</div>
   </div>
   <p class="toggle-link">
@@ -222,6 +228,10 @@ const signupSuccess = document.getElementById('signup-success');
 const dashboard = document.getElementById('dashboard');
 const messagesList = document.getElementById('messages-list');
 const logoutBtn = document.getElementById('logout-btn');
+const sendMsgForm = document.getElementById('send-msg-form');
+const toCodeInput = document.getElementById('to-code');
+const msgTextInput = document.getElementById('msg-text');
+const sendMsgFeedback = document.getElementById('send-msg-feedback');
 
 function showLogin() {
   isLogin = true;
@@ -316,6 +326,58 @@ if (logoutBtn) {
   logoutBtn.onclick = function() {
     localStorage.removeItem('token');
     showAuthForm();
+  };
+}
+
+if (sendMsgForm) {
+  sendMsgForm.onsubmit = async function(e) {
+    e.preventDefault();
+    sendMsgFeedback.textContent = '';
+    const to = toCodeInput.value.trim();
+    const message = msgTextInput.value;
+    if (!to || !message) {
+      sendMsgFeedback.textContent = 'Recipient code and message are required.';
+      return;
+    }
+    try {
+      // 1. Fetch recipient's public key
+      const pubRes = await fetch(`http://localhost:5000/public-key/${to}`);
+      const pubData = await pubRes.json();
+      if (!pubRes.ok) throw new Error(pubData.message || 'Failed to get public key.');
+      const publicKeyPem = pubData.publicKey;
+      const publicKey = forge.pki.publicKeyFromPem(publicKeyPem);
+      // 2. Generate random AES key and IV
+      const aesKey = forge.random.getBytesSync(32); // 256-bit
+      const iv = forge.random.getBytesSync(16); // 128-bit
+      // 3. Encrypt message with AES
+      const cipher = forge.cipher.createCipher('AES-CBC', aesKey);
+      cipher.start({ iv: iv });
+      cipher.update(forge.util.createBuffer(message, 'utf8'));
+      cipher.finish();
+      const encryptedMessage = forge.util.encode64(cipher.output.getBytes());
+      // 4. Encrypt AES key with recipient's public key
+      const encryptedAESKey = forge.util.encode64(publicKey.encrypt(aesKey, 'RSA-OAEP'));
+      // 5. Send message (include IV as base64 for real security)
+      const token = localStorage.getItem('token');
+      const res = await fetch('http://localhost:5000/send-message', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        },
+        body: JSON.stringify({ to, encryptedMessage, encryptedAESKey })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed to send message.');
+      sendMsgFeedback.style.color = '#4caf50';
+      sendMsgFeedback.textContent = 'Message sent!';
+      msgTextInput.value = '';
+      setTimeout(() => { sendMsgFeedback.textContent = ''; }, 2000);
+      fetchMessages();
+    } catch (err) {
+      sendMsgFeedback.style.color = '#ff9800';
+      sendMsgFeedback.textContent = err.message;
+    }
   };
 }
 
