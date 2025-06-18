@@ -145,7 +145,7 @@ app.post('/login', async (req, res) => {
 
 // Send message endpoint
 app.post('/send-message', authenticateToken, async (req, res) => {
-  const { to, encryptedMessage, encryptedAESKey } = req.body;
+  const { to, encryptedMessage, encryptedAESKey  ,id,timestamp} = req.body;
   const from = req.user.code;
   if (!to || !encryptedMessage || !encryptedAESKey) {
     return res.status(400).json({ message: 'All fields are required.' });
@@ -156,9 +156,10 @@ app.post('/send-message', authenticateToken, async (req, res) => {
   const msg = { 
     from, 
     to,
+    id,
     encryptedMessage, 
     encryptedAESKey, 
-    timestamp: Date.now() 
+    timestamp:timestamp || Date.now()
   };
 
   // Add to recipient's queue and history

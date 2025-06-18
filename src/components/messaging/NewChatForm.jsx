@@ -20,7 +20,7 @@ const StyledInput = styled(Input)`
   color: #fff;
   padding: 12px 16px;
   border-radius: 8px;
-
+  width: 100%;
   &::placeholder {
     color: #8696a0;
   }
@@ -33,9 +33,11 @@ const StyledInput = styled(Input)`
 
 const StyledButton = styled(Button)`
   background: #00a884;
-  padding: 8px 16px;
-  border-radius: 8px;
-  transition: background 0.2s ease;
+  font-size: 0.9rem;
+  font-weight: 600;
+
+  border-radius: 10px;
+  transition: background 0.5s ease-in-out;
 
   &:hover {
     background: #02735e;

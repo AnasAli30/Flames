@@ -2,25 +2,48 @@ import styled from '@emotion/styled';
 import { keyframes } from '@emotion/react';
 
 export const flameRotate = keyframes`
-  0%   { transform: rotate(0deg) scale(1); opacity: 0.85; }
-  25%  { transform: rotate(90deg) scale(1.1); opacity: 1; }
-  50%  { transform: rotate(180deg) scale(1.2); opacity: 0.9; }
-  75%  { transform: rotate(270deg) scale(1.1); opacity: 1; }
-  100% { transform: rotate(360deg) scale(1); opacity: 0.85; }
+  0%   { transform: rotate(0deg) translateY(0px); opacity: 0.7; }
+  50%  { transform: rotate(180deg) translateY(-8px); opacity: 0.9; }
+  100% { transform: rotate(360deg) translateY(0px); opacity: 0.7; }
 `;
 
 export const flameGlow = keyframes`
   0%, 100% {
-    text-shadow:
-      0 0 8px #bb8fce,
-      0 0 16px #dc8465,
-      0 0 22px #f1a45e;
+    text-shadow: 0 0 20px rgba(255, 152, 0, 0.4);
   }
   50% {
-    text-shadow:
-      0 0 16px #f1a45e,
-      0 0 28px #fcb045,
-      0 0 38px #fd1d1d;
+    text-shadow: 0 0 30px rgba(255, 152, 0, 0.6);
+  }
+`;
+
+export const pulseGlow = keyframes`
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(255, 152, 0, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(255, 152, 0, 0.3);
+  }
+`;
+
+export const slideInFromLeft = keyframes`
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+`;
+
+export const slideInFromRight = keyframes`
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
   }
 `;
 
@@ -32,14 +55,18 @@ export const fadeIn = keyframes`
 export const Container = styled.div`
   position: relative;
   z-index: 2;
-  margin: 7vh auto 0 auto;
-  max-width: 340px;
-  background: rgba(30,30,30,0.95);
-  border-radius: 18px;
-  box-shadow: 0 8px 32px #000a;
-  padding: 2.5rem 2rem 2rem 2rem;
-  text-align: center;
-  animation: ${fadeIn} 0.7s cubic-bezier(.4,0,.2,1);
+  margin: 0 auto;
+  max-width: 1400px;
+  width: 100%;
+  padding: 20px;
+  
+  @media (max-width: 768px) {
+    padding: 15px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 10px;
+  }
 `;
 
 export const FlamesBackground = styled.div`
@@ -48,6 +75,8 @@ export const FlamesBackground = styled.div`
   height: 100vh;
   z-index: 0;
   pointer-events: none;
+  overflow: hidden;
+  will-change: transform;
 `;
 
 export const FlameText = styled.div`
@@ -58,7 +87,8 @@ export const FlameText = styled.div`
   opacity: 0.12;
   user-select: none;
   filter: blur(0.5px);
-  animation: ${flameRotate} 6s linear infinite, ${flameGlow} 1.2s ease-in-out infinite alternate;
+  animation: ${flameRotate} 8s linear infinite;
+  transform-origin: center center;
 `;
 
 export const Title = styled.h1`

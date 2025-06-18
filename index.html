@@ -3,11 +3,44 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + React</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="description" content="Flames - Secure messaging app with end-to-end encryption" />
+    <meta name="theme-color" content="#ff9800" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <title>Flames - Secure Messaging</title>
+    <style>
+      /* Prevent flash of unstyled content */
+      body {
+        background: linear-gradient(135deg, #0c1426 0%, #1a1a2e 50%, #16213e 100%);
+        margin: 0;
+        font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+        color: #ffffff;
+      }
+      #root {
+        min-height: 100vh;
+      }
+      /* Loading spinner */
+      .loading {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: #ff9800;
+        font-size: 24px;
+        animation: pulse 1.5s ease-in-out infinite alternate;
+      }
+      @keyframes pulse {
+        from { opacity: 0.5; }
+        to { opacity: 1; }
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div class="loading">🔥 Flames Loading...</div>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
