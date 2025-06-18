@@ -7,12 +7,30 @@ const ChatViewContainer = styled.div`
   display: flex;
   flex-direction: column;
   background: linear-gradient(135deg, 
-    rgba(11, 20, 26, 0.95) 0%, 
-    rgba(22, 33, 62, 0.95) 100%);
+    rgba(15, 23, 42, 0.98) 0%, 
+    rgba(30, 41, 59, 0.98) 50%,
+    rgba(51, 65, 85, 0.98) 100%);
   height: 100%;
   min-width: 0;
   position: relative;
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(20px);
+  box-shadow: 
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 0 40px rgba(0, 0, 0, 0.3);
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, 
+      rgba(255, 152, 0, 0.02) 0%, 
+      transparent 50%,
+      rgba(255, 107, 53, 0.02) 100%);
+    pointer-events: none;
+  }
 
   @media (max-width: 768px) {
     height: calc(100vh - 200px);

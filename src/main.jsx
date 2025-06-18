@@ -19,6 +19,7 @@ const globalStyles = css`
     overflow-x: hidden;
     overflow-y: auto;
     color: #ffffff;
+    scroll-behavior: smooth;
   }
 
   #root {

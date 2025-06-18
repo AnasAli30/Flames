@@ -130,18 +130,45 @@ export const Button = styled.button`
   background: linear-gradient(90deg, #ff9800 60%, #ff5722 100%);
   color: #fff;
   border: none;
-  border-radius: 8px;
-  padding: 0.8em 1.5em;
+  border-radius: 12px;
+  padding: 0.9em 1.8em;
   font-size: 1.1rem;
-  font-weight: bold;
+  font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 2px 8px #ff980033;
-  transition: background 0.18s, transform 0.13s;
+  box-shadow: 
+    0 4px 12px rgba(255, 152, 0, 0.3),
+    0 2px 6px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
   width: ${props => props.fullWidth ? '100%' : 'auto'};
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+  }
 
   &:hover {
     background: linear-gradient(90deg, #ffb300 60%, #ff7043 100%);
-    transform: scale(1.04);
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 
+      0 8px 20px rgba(255, 152, 0, 0.4),
+      0 4px 12px rgba(0, 0, 0, 0.3);
+      
+    &::before {
+      left: 100%;
+    }
+  }
+  
+  &:active {
+    transform: translateY(-1px) scale(1.03);
+    transition: all 0.1s;
   }
 `;
 

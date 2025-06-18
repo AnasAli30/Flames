@@ -6,14 +6,32 @@ const ChatListContainer = styled.div`
   width: 350px;
   min-width: 350px;
   background: linear-gradient(135deg, 
-    rgba(42, 47, 50, 0.95) 0%, 
-    rgba(26, 26, 46, 0.95) 100%);
-  border-right: 1px solid rgba(255, 152, 0, 0.3);
+    rgba(15, 23, 42, 0.98) 0%, 
+    rgba(30, 41, 59, 0.98) 50%,
+    rgba(51, 65, 85, 0.98) 100%);
+  border-right: 1px solid rgba(255, 152, 0, 0.2);
   height: 100%;
   display: flex;
   flex-direction: column;
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(20px);
   position: relative;
+  box-shadow: 
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    2px 0 20px rgba(0, 0, 0, 0.3);
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, 
+      rgba(255, 152, 0, 0.03) 0%, 
+      transparent 50%,
+      rgba(255, 107, 53, 0.03) 100%);
+    pointer-events: none;
+  }
   
   &::after {
     content: '';
@@ -21,9 +39,13 @@ const ChatListContainer = styled.div`
     top: 0;
     right: 0;
     bottom: 0;
-    width: 2px;
-    background: linear-gradient(180deg, transparent, #ff9800, transparent);
-    opacity: 0.6;
+    width: 1px;
+    background: linear-gradient(180deg, 
+      transparent, 
+      rgba(255, 152, 0, 0.8), 
+      transparent);
+    opacity: 0.8;
+    box-shadow: 1px 0 8px rgba(255, 152, 0, 0.3);
   }
 
   @media (min-width: 1200px) {

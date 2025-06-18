@@ -15,6 +15,7 @@ import LoginForm from './components/auth/LoginForm';
 import SignupForm from './components/auth/SignupForm';
 import ChatList from './components/messaging/ChatList';
 import ChatView from './components/messaging/ChatView';
+import LoadingScreen from './components/LoadingScreen';
 import { v4 as uuidv4 } from 'uuid';
 import { keyframes } from '@emotion/react';
 
@@ -345,6 +346,7 @@ const Subtext = styled.p`
 `;
 
 const App = () => {
+  const [isLoading, setIsLoading] = useState(true);
   const [isLogin, setIsLogin] = useState(true);
   const [authState, setAuthState] = useState({
     isAuthenticated: false,
@@ -359,12 +361,26 @@ const App = () => {
   const [chatError, setChatError] = useState('');
 
   useEffect(() => {
-    // Check for stored auth state
-    const storedAuth = localStorage.getItem('authState');
-    if (storedAuth) {
-      const parsedAuth = JSON.parse(storedAuth);
-      setAuthState(parsedAuth);
-    }
+    // Initialize app
+    const initializeApp = async () => {
+      try {
+        // Check for stored auth state
+        const storedAuth = localStorage.getItem('authState');
+        if (storedAuth) {
+          const parsedAuth = JSON.parse(storedAuth);
+          setAuthState(parsedAuth);
+        }
+        
+        // Simulate loading time for better UX
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      } catch (error) {
+        console.error('Failed to initialize app:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initializeApp();
   }, []);
 
   useEffect(() => {
@@ -1018,6 +1034,11 @@ const App = () => {
     setChats([]);
     setActiveChat(null);
   };
+
+  // Show loading screen during initialization
+  if (isLoading) {
+    return <LoadingScreen onComplete={() => setIsLoading(false)} />;
+  }
 
   return (
     <>
