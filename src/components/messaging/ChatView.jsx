@@ -98,6 +98,20 @@ const ChatName = styled.div`
   }
 `;
 
+const ChatCode = styled.div`
+  color: #8696a0;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-left: 10px;
+  font-size: 12px;
+  font-weight: 400;
+  position: absolute;
+  right: 25px;
+  top: 25px;
+`;
+
 const MessagesContainer = styled.div`
   flex: 1;
   overflow-y: auto;
@@ -194,6 +208,14 @@ const MessageBubble = styled.div`
       opacity: 1;
       transform: translateY(0);
     }
+  }
+
+  &.blurred {
+    filter: blur(4px);
+    transition: filter 0.2s;
+  }
+  &.blurred:hover {
+    filter: none;
   }
 `;
 
@@ -333,7 +355,12 @@ const SendButton = styled(Button)`
 const ChatView = ({ activeChat, messages, onSendMessage }) => {
   const [decryptedMessages, setDecryptedMessages] = useState([]);
   const messagesEndRef = useRef(null);
+
+  const [customNames, setCustomNames] = useState(() => {
+    return JSON.parse(localStorage.getItem('chatCustomNames') || '{}');
+  });
   const [isDecrypting, setIsDecrypting] = useState(false);
+  const [showAll, setShowAll] = useState(false);
   console.log("chatview messages", messages);
 
   const scrollToBottom = () => {
@@ -355,6 +382,10 @@ const ChatView = ({ activeChat, messages, onSendMessage }) => {
     setDecryptedMessages(sortedMessages);
   }, [messages]);
 
+  useEffect(() => {
+    setShowAll(false);
+  }, [activeChat?.code]);
+
   const handleSubmit = (e) => {
     e.preventDefault();
     const message = e.target.message.value;
@@ -367,25 +398,52 @@ const ChatView = ({ activeChat, messages, onSendMessage }) => {
   return (
     <ChatViewContainer>
       <ChatHeader>
-        <ChatAvatar>{activeChat?.email?.[0]?.toUpperCase() || '?'}</ChatAvatar>
-        <ChatName>{activeChat?.email || 'Loading...'}</ChatName>
+        <ChatAvatar>{(activeChat?.customName || activeChat?.email || activeChat?.code)?.[0]?.toUpperCase() || '?'}</ChatAvatar>
+        <ChatName>{activeChat?.customName || customNames[activeChat?.code] || activeChat?.email || activeChat?.code || 'Loading...'}</ChatName>
+        {customNames[activeChat?.code] && (
+        <ChatCode>{ activeChat?.code || 'Loading...'}</ChatCode>
+        )}
       </ChatHeader>
 
       <MessagesContainer>
-        {decryptedMessages.map((msg, index) => (
-          <MessageBubble 
-            key={`${msg.timestamp}-${index}`}
-            sent={msg.from === 'me'}
-          >
-            {msg.decryptedContent || msg.encryptedMessage}
-            <MessageTime sent={msg.from === 'me'}>
-              {new Date(msg.timestamp).toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit'
-              })}
-            </MessageTime>
-          </MessageBubble>
-        ))}
+        {!showAll && decryptedMessages.length > 2 && (
+          <div style={{ textAlign: 'center', margin: '10px 0' }}>
+            <button
+              style={{
+                background: '#23272f',
+                color: '#ff9800',
+                border: '1px solid #ff9800',
+                borderRadius: '8px',
+                padding: '6px 18px',
+                cursor: 'pointer',
+                fontSize: '15px',
+                marginBottom: '10px'
+              }}
+              onClick={() => setShowAll(true)}
+            >
+              Show All Messages
+            </button>
+          </div>
+        )}
+        {decryptedMessages.map((msg, index) => {
+          const isLastTwo = index >= decryptedMessages.length - 2;
+          const shouldBlur = !showAll && !isLastTwo;
+          return (
+            <MessageBubble
+              key={`${msg.timestamp}-${index}`}
+              sent={msg.from === 'me'}
+              className={shouldBlur ? 'blurred' : ''}
+            >
+              {msg.decryptedContent || msg.encryptedMessage}
+              <MessageTime>
+                {new Date(msg.timestamp).toLocaleTimeString([], {
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
+              </MessageTime>
+            </MessageBubble>
+          );
+        })}
         <div ref={messagesEndRef} />
       </MessagesContainer>
 

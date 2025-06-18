@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import styled from '@emotion/styled';
 import NewChatForm from './NewChatForm';
 
@@ -95,6 +95,15 @@ const ChatListScroll = styled.div`
   }
 `;
 
+const EditButton = styled.button`
+  margin-left: 8px;
+  border: none;
+  background: none;
+  color: #ff9800;
+  cursor: pointer;
+  display: none;
+`;
+
 const ChatItem = styled.div`
   padding: 16px 20px;
   display: flex;
@@ -119,6 +128,9 @@ const ChatItem = styled.div`
       rgba(26, 26, 46, 0.8) 100%);
     transform: translateX(2px);
     border-left: 3px solid rgba(255, 152, 0, 0.5);
+    .edit-btn {
+      display: inline-block;
+    }
   }
 
   @media (max-width: 768px) {
@@ -220,10 +232,24 @@ const UserCode = styled.div`
 
 const ChatList = ({ chats = [], activeChat, onChatSelect, onStartChat, userCode, error }) => {
   const [search, setSearch] = useState('');
+  const [customNames, setCustomNames] = useState(() => {
+    return JSON.parse(localStorage.getItem('chatCustomNames') || '{}');
+  });
+  const [editingChat, setEditingChat] = useState(null);
+  const [editValue, setEditValue] = useState('');
 
-  const getAvatarText = (email) => {
-    if (!email) return '?';
-    return email[0].toUpperCase();
+  // Save custom names to localStorage when changed
+  React.useEffect(() => {
+    console.log("customNames in chatlist", customNames);
+    console.log("localStoragein chatlist", localStorage.getItem('chatCustomNames'));
+    localStorage.setItem('chatCustomNames', JSON.stringify(customNames));
+  }, [customNames]);
+
+  const getAvatarText = (email, code) => {
+    if (customNames[code]) return customNames[code][0].toUpperCase();
+    if (email) return email[0].toUpperCase();
+    if (code) return code[0].toUpperCase();
+    return '?';
   };
 
   const formatTime = (timestamp) => {
@@ -245,17 +271,32 @@ const ChatList = ({ chats = [], activeChat, onChatSelect, onStartChat, userCode,
     });
   };
 
-  // Filter chats by search string
+  // Filter and sort chats
   const filteredChats = chats.filter(chat => {
     if (!search) return true;
     const val = search.toLowerCase();
     return (
+      (customNames[chat.code] && customNames[chat.code].toLowerCase().includes(val)) ||
       (chat.email && chat.email.toLowerCase().includes(val)) ||
       (chat.code && chat.code.toLowerCase().includes(val))
     );
   })
-  // Sort by lastMessageTime descending
   .sort((a, b) => (b.lastMessageTime || 0) - (a.lastMessageTime || 0));
+
+  // Handle rename
+  const startEdit = (chat) => {
+    setEditingChat(chat.code);
+    setEditValue(customNames[chat.code] || '');
+  };
+  const saveEdit = (chat) => {
+    setCustomNames(prev => ({ ...prev, [chat.code]: editValue.trim() }));
+    setEditingChat(null);
+    setEditValue('');
+  };
+  const cancelEdit = () => {
+    setEditingChat(null);
+    setEditValue('');
+  };
 
   return (
     <ChatListContainer>
@@ -282,17 +323,65 @@ const ChatList = ({ chats = [], activeChat, onChatSelect, onStartChat, userCode,
       <ChatListScroll>
         {Array.isArray(filteredChats) && filteredChats.map(chat => {
           if (!chat || !chat.code) return null;
+          const isEditing = editingChat === chat.code;
           return (
             <ChatItem 
               key={chat.code} 
               active={activeChat?.code === chat.code}
               onClick={() => onChatSelect(chat)}
             >
-              <Avatar>{getAvatarText(chat.email)}</Avatar>
+              <Avatar>{getAvatarText(chat.email, chat.code)}</Avatar>
               <ChatInfo>
                 <ChatName>
-                  <span>{chat.email || chat.code}</span>
-                  <TimeStamp>{formatTime(chat.lastMessageTime)}</TimeStamp>
+                  {isEditing ? (
+                    <>
+                      <input
+                        type="text"
+                        value={editValue}
+                        onChange={e => setEditValue(e.target.value)}
+                        onClick={e => e.stopPropagation()}
+                        style={{
+                          fontSize: '15px',
+                          padding: '5px 10px',
+                          borderRadius: '10px',
+                          border: '1px solid #ff9800',
+                          background: '#23272f',
+                          outline: 'none',
+                          // border: 'none',
+                          color: '#fff',
+                          marginRight: '6px',
+                          width: '120px'
+                        }}
+                        autoFocus
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') saveEdit(chat);
+                          if (e.key === 'Escape') cancelEdit();
+                        }}
+                      />
+                      <button
+                        onClick={e => { e.stopPropagation(); saveEdit(chat); }}
+                        style={{ marginRight: 4, border: 'none', background: 'none', color: '#ff9800', cursor: 'pointer' }}
+                        title="Save"
+                      >✔</button>
+                      <button
+                        onClick={e => { e.stopPropagation(); cancelEdit(); }}
+                        style={{ border: 'none', background: 'none', color: '#ff9800', cursor: 'pointer' }}
+                        title="Cancel"
+                      >✖</button>
+                    </>
+                  ) : (
+                    <>
+                      <span>{customNames[chat.code] || chat.email || chat.code}</span>
+                      <TimeStamp>{formatTime(chat.lastMessageTime)}
+                      <EditButton
+                        onClick={e => { e.stopPropagation(); startEdit(chat); }}
+                        title="Rename chat"
+                        className="edit-btn"
+                      >✎</EditButton>
+                      </TimeStamp>
+                     
+                    </>
+                  )}
                 </ChatName>
                 <LastMessage>
                   {chat.lastMessage || 'No messages yet'}
