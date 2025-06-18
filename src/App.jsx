@@ -16,6 +16,7 @@ import SignupForm from './components/auth/SignupForm';
 import ChatList from './components/messaging/ChatList';
 import ChatView from './components/messaging/ChatView';
 import { v4 as uuidv4 } from 'uuid';
+import { keyframes } from '@emotion/react';
 
 const ChatContainer = styled.div`
   display: flex;
@@ -23,7 +24,7 @@ const ChatContainer = styled.div`
   background: linear-gradient(135deg, 
     rgba(17, 27, 33, 0.95) 0%, 
     rgba(26, 26, 46, 0.95) 50%, 
-    rgba(22, 33, 62, 0.95) 100%);
+    rgba(255, 123, 57, 0.95) 100%);
   border-radius: 16px;
   overflow: hidden;
   margin-top: 20px;
@@ -86,6 +87,28 @@ const Header = styled.div`
 
   @media (max-width: 480px) {
     padding: 10px 0;
+  }
+`;
+
+// Add a flame sticker background for the title
+const FlameSticker = styled.div`
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -60%);
+  z-index: 0;
+  pointer-events: none;
+  font-size: 8rem;
+  opacity: 0.13;
+  filter: blur(1.5px) drop-shadow(0 0 32px #ff9800cc);
+  user-select: none;
+  @media (max-width: 768px) {
+    font-size: 5rem;
+    top: 55%;
+  }
+  @media (max-width: 480px) {
+    font-size: 3.2rem;
+    top: 60%;
   }
 `;
 
@@ -191,30 +214,36 @@ const EmptyState = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #8696a0;
-  fontSize: 18px;
-  background: linear-gradient(135deg, 
-    rgba(11, 20, 26, 0.8) 0%, 
-    rgba(22, 33, 62, 0.8) 100%);
-  padding: 40px 20px;
+  color: #ff9800;
+  font-size: 2.2rem;
+  background: linear-gradient(135deg, rgba(11, 20, 26, 0.8) 0%, rgba(22, 33, 62, 0.8) 100%);
+  padding: 60px 20px;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
   position: relative;
-  
-  &::before {
-    content: '🔥';
-    font-size: 4rem;
-    opacity: 0.3;
-    animation: ${flameGlow} 2s ease-in-out infinite alternate;
-  }
-
+  font-weight: 800;
+  text-shadow: 0 2px 16px #ff980044;
   @media (max-width: 768px) {
-    padding: 20px;
-    font-size: 16px;
-    
-    &::before {
-      font-size: 3rem;
-    }
+    padding: 30px;
+    font-size: 1.5rem;
+  }
+  @media (max-width: 480px) {
+    padding: 18px;
+    font-size: 1.1rem;
+  }
+`;
+
+const BigFlame = styled.div`
+  font-size: 8rem;
+  text-align: center;
+  margin-bottom: 24px;
+  filter: drop-shadow(0 0 32px #ff9800cc) blur(0.5px);
+  user-select: none;
+  @media (max-width: 768px) {
+    font-size: 5rem;
+  }
+  @media (max-width: 480px) {
+    font-size: 3.2rem;
   }
 `;
 
@@ -245,6 +274,75 @@ const MobileToggle = styled.button`
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 console.log("API_BASE_URL", API_BASE_URL);
+
+// Add flame bounce animation
+const flameBounce = keyframes`
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-18px) scale(1.12); }
+`;
+
+const GlassCard = styled.div`
+  background: rgba(30, 30, 30, 0.85);
+  border-radius: 32px;
+  box-shadow: 0 8px 32px 0 rgba(255,152,0,0.18), 0 1.5px 8px 0 #ff980055;
+  backdrop-filter: blur(16px);
+  border: 1.5px solid rgba(255,152,0,0.18);
+  padding: 3.5rem 2.5rem 2.5rem 2.5rem;
+  max-width: 520px;
+  margin: 0 auto;
+  width: 98vw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: ${fadeIn} 0.8s cubic-bezier(.77,0,.18,1) both;
+  @media (max-width: 600px) {
+    padding: 2rem 0.7rem 1.2rem 0.7rem;
+    max-width: 99vw;
+  }
+`;
+
+const AnimatedFlame = styled.div`
+  font-size: 8rem;
+  margin-bottom: 18px;
+  filter: drop-shadow(0 0 32px #ff9800cc) blur(0.5px);
+  user-select: none;
+  animation: ${flameBounce} 2.2s infinite;
+  @media (max-width: 768px) {
+    font-size: 5rem;
+  }
+  @media (max-width: 480px) {
+    font-size: 3.2rem;
+  }
+`;
+
+const Headline = styled.h2`
+  font-size: 2.5rem;
+  font-weight: 900;
+  margin-bottom: 0.5em;
+  background: linear-gradient(90deg, #ff9800 30%, #ff6b35 70%, #fff176 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-align: center;
+  letter-spacing: 0.02em;
+  text-shadow: 0 2px 16px #ff980044;
+  @media (max-width: 600px) {
+    font-size: 1.5rem;
+  }
+`;
+
+const Subtext = styled.p`
+  color: #ff9800;
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin-top: 0.5em;
+  margin-bottom: 0;
+  text-align: center;
+  opacity: 0.92;
+  text-shadow: 0 1px 8px #ff980033;
+  @media (max-width: 600px) {
+    font-size: 1rem;
+  }
+`;
 
 const App = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -911,47 +1009,133 @@ const App = () => {
   return (
     <>
       <FlamesBackground />
-      <Container style={{ maxWidth: '100%', padding: '0 20px' }}>
-        <Header>
-          <Title>FLAMES</Title>
+      <Container
+        style={{
+          maxWidth: '100%',
+          padding: '0 30px',
+          fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+          color: '#eaeaea',
+          backgroundColor: '#111b21',
+          minHeight: '100vh',
+          background: 'linear-gradient(135deg, #111b21 0%, #1a2b3c 100%)',
+        }}
+      >
+        <Header
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '30px 0',
+            borderBottom: '1px solid #2a3942',
+            position: 'relative',
+            zIndex: 10
+          }}
+        >
+          <FlameSticker>🔥</FlameSticker>
+          <Title style={{ 
+            fontSize: '60px', 
+            color: '#00a884', 
+            letterSpacing: '2px',
+            fontFamily: 'SF Pro Display',
+            fontWeight: 'bold',
+            margin: 0,
+            position: 'relative',
+            zIndex: 1
+          }}>FLAMES</Title>
           {authState.isAuthenticated && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={{ color: '#8696a0', fontSize: '14px' }}>
-                Your code: <strong style={{ color: '#00a884' }}>{authState.user?.code}</strong>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+              <span style={{ fontSize: '16px', color: '#b0b9be' }}>
+                Your code:{' '}
+                <strong style={{ 
+                  color: '#00a884', 
+                  fontWeight: 600,
+                  fontSize: '18px',
+                  background: 'linear-gradient(45deg, #00a884, #00d4a3)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent'
+                }}>
+                  {authState.user?.code}
+                </strong>
               </span>
-              <Button onClick={handleLogout}>Logout</Button>
+              <Button
+                onClick={handleLogout}
+                style={{
+                  backgroundColor: '#1f2c33',
+                  color: '#eaeaea',
+                  border: 'none',
+                  padding: '12px 24px',
+                  borderRadius: '12px',
+                  cursor: 'pointer',
+                  fontSize: '16px',
+                  fontWeight: 500
+                }}
+              >
+                Logout
+              </Button>
             </div>
           )}
         </Header>
-        
+  
         {!authState.isAuthenticated ? (
-          <div style={{ maxWidth: '500px', margin: '0 auto', width: '100%' }}>
-            <Subtitle>{isLogin ? 'Login' : 'Sign Up'}</Subtitle>
+          <>
             {isLogin ? (
               <LoginForm onSubmit={handleLogin} error={error} />
             ) : (
               <SignupForm onSubmit={handleSignup} error={error} />
             )}
-            <ToggleLink>
-              <a href="#" onClick={(e) => {
-                e.preventDefault();
-                setIsLogin(!isLogin);
-                setError('');
-              }}>
+            <ToggleLink style={{ textAlign: 'center', marginTop: '30px' }}>
+              <a
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setIsLogin(!isLogin);
+                  setError('');
+                }}
+                style={{
+                  color: '#00a884',
+                  fontSize: '16px',
+                  textDecoration: 'none',
+                  fontWeight: 500,
+                  transition: 'all 0.3s ease',
+                  padding: '10px 20px',
+                  borderRadius: '8px',
+                  ':hover': {
+                    backgroundColor: 'rgba(0, 168, 132, 0.1)'
+                  }
+                }}
+              >
                 {isLogin ? "Don't have an account? Sign Up" : 'Already have an account? Log In'}
               </a>
             </ToggleLink>
-          </div>
+          </>
         ) : (
-          <ChatContainer>
-            <ChatList 
-              chats={chats}
-              activeChat={activeChat}
-              onChatSelect={setActiveChat}
-              onStartChat={handleStartChat}
-              userCode={authState.user?.code}
-              error={chatError}
-            />
+          <ChatContainer
+            style={{
+              display: 'flex',
+              height: 'calc(100vh - 120px)',
+              marginTop: '30px',
+              borderRadius: '20px',
+              overflow: 'hidden',
+              boxShadow: '0 0 30px rgba(0,0,0,0.4)',
+            }}
+          >
+            <div style={{ 
+              width: '570px',
+              backgroundColor: 'rgba(31, 44, 51, 0.8)',
+              padding: '10px',
+              overflowY: 'auto',
+              backdropFilter: 'blur(10px)',
+              borderRight: '1px solid rgba(255, 255, 255, 0.1)'
+            }}>
+              <ChatList
+                chats={chats}
+                activeChat={activeChat}
+                onChatSelect={setActiveChat}
+                onStartChat={handleStartChat}
+                userCode={authState.user?.code}
+                error={chatError}
+              />
+            </div>
             {activeChat ? (
               <ChatView
                 activeChat={activeChat}
@@ -960,26 +1144,20 @@ const App = () => {
                 error={chatError}
               />
             ) : (
-              <div style={{ 
-                flex: 1, 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center',
-                color: '#8696a0',
-                fontSize: '18px',
-                background: '#0b141a',
-                padding: '20px',
-                flexDirection: 'column',
-                gap: '10px'
-              }}>
-                <div>Select a chat or start a new one to begin messaging</div>
-              </div>
+              <EmptyState>
+                <GlassCard>
+                  <AnimatedFlame>🔥</AnimatedFlame>
+                  <Headline>Ready to spark a new chat?</Headline>
+                  <Subtext>Start a <span role="img" aria-label="fire">🔥</span> conversation and make it lit!</Subtext>
+                </GlassCard>
+              </EmptyState>
             )}
           </ChatContainer>
         )}
       </Container>
     </>
   );
+  
 };
 
 export default App;
