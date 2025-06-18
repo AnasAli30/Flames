@@ -243,6 +243,9 @@ const MobileToggle = styled.button`
   }
 `;
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+console.log("API_BASE_URL", API_BASE_URL);
+
 const App = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [authState, setAuthState] = useState({
@@ -277,7 +280,7 @@ const App = () => {
 
   const fetchChatList = async () => {
     try {
-      const response = await fetch('http://localhost:5000/message-history', {
+      const response = await fetch(`${API_BASE_URL}/message-history`, {
         headers: {
           'Authorization': `Bearer ${authState.token}`
         }
@@ -382,7 +385,7 @@ const App = () => {
   const handleLogin = async (data) => {
     try {
       console.log('Attempting login with:', data);
-      const response = await fetch('http://localhost:5000/login', {
+      const response = await fetch(`${API_BASE_URL}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
@@ -420,7 +423,7 @@ const App = () => {
 
   const handleSignup = async (data) => {
     try {
-      const response = await fetch('http://localhost:5000/register', {
+      const response = await fetch(`${API_BASE_URL}/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
@@ -442,7 +445,7 @@ const App = () => {
   const handleStartChat = async (code) => {
     try {
       // Validate that the code exists
-      const response = await fetch(`http://localhost:5000/public-key/${code}`, {
+      const response = await fetch(`${API_BASE_URL}/public-key/${code}`, {
         headers: {
           'Authorization': `Bearer ${authState.token}`
         }
@@ -552,7 +555,7 @@ const App = () => {
       const finalEncryptedMessage = arrayToBase64(combinedArray);
 
       // Get recipient's public key
-      const publicKeyResponse = await fetch(`http://localhost:5000/public-key/${activeChat.code}`, {
+      const publicKeyResponse = await fetch(`${API_BASE_URL}/public-key/${activeChat.code}`, {
         headers: {
           'Authorization': `Bearer ${authState.token}`
         }
@@ -631,7 +634,7 @@ const App = () => {
       localStorage.setItem('sentMessages', JSON.stringify(sentMessages));
 
       // Send to server
-      const response = await fetch('http://localhost:5000/send-message', {
+      const response = await fetch(`${API_BASE_URL}/send-message`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -690,7 +693,7 @@ const App = () => {
 
   const fetchMessages = async () => {
     try {
-      const response = await fetch('http://localhost:5000/fetch-messages', {
+      const response = await fetch(`${API_BASE_URL}/fetch-messages`, {
         headers: {
           'Authorization': `Bearer ${authState.token}`
         }
