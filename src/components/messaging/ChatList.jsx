@@ -253,7 +253,9 @@ const ChatList = ({ chats = [], activeChat, onChatSelect, onStartChat, userCode,
       (chat.email && chat.email.toLowerCase().includes(val)) ||
       (chat.code && chat.code.toLowerCase().includes(val))
     );
-  });
+  })
+  // Sort by lastMessageTime descending
+  .sort((a, b) => (b.lastMessageTime || 0) - (a.lastMessageTime || 0));
 
   return (
     <ChatListContainer>
