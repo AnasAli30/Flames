@@ -304,7 +304,7 @@ const ChatList = ({ chats = [], activeChat, onChatSelect, onStartChat, userCode,
       <div style={{ padding: '10px 16px' }}>
         <input
           type="text"
-          placeholder="Search chats..."
+          placeholder="Search users..."
           value={search}
           onChange={e => setSearch(e.target.value)}
           style={{

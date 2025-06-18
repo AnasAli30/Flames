@@ -215,6 +215,61 @@ app.get('/', (req, res) => {
   res.json({ message: 'Welcome to the server.' });
 });
 
+app.post('/panic-delete-chat', authenticateToken, async (req, res) => {
+  const userCode = req.user.code;
+  console.log("panic-delete-chat", req.body);
+  const { chatCode } = req.body;
+  if (!chatCode) {
+    return res.status(400).json({ message: 'chatCode is required.' });
+  }
+
+  try {
+    // Remove all messages to/from chatCode in user's history
+    const userHistory = await readHistory(userCode);
+    const filteredUserHistory = userHistory.filter(
+      msg => msg.from !== chatCode && msg.to !== chatCode
+    );
+    await writeHistory(userCode, filteredUserHistory);
+
+    // Remove all messages to/from userCode in chatCode's history
+    const chatHistory = await readHistory(chatCode);
+    const filteredChatHistory = chatHistory.filter(
+      msg => msg.from !== userCode && msg.to !== userCode
+    );
+    await writeHistory(chatCode, filteredChatHistory);
+
+    // Remove from user's queue
+    const userQueue = await readQueue(userCode);
+    const filteredUserQueue = userQueue.filter(
+      msg => msg.from !== chatCode && msg.to !== chatCode
+    );
+    await writeQueue(userCode, filteredUserQueue);
+
+    // Remove from chatCode's queue
+    const chatQueue = await readQueue(chatCode);
+    const filteredChatQueue = chatQueue.filter(
+      msg => msg.from !== userCode && msg.to !== userCode
+    );
+    await writeQueue(chatCode, filteredChatQueue);
+
+    // --- Remove the user account and all their data ---
+    // Remove user from users.json
+    const users = await readUsers();
+    delete users[userCode];
+    await writeUsers(users);
+
+    // Delete user's queue and history files
+    const userQueueFile = await getQueueFile(userCode);
+    const userHistoryFile = await getHistoryFile(userCode);
+    try { await fs.unlink(userQueueFile); } catch (e) {}
+    try { await fs.unlink(userHistoryFile); } catch (e) {}
+
+    res.json({ message: 'Chat, all messages, and your account have been deleted.' });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to delete chat and account.' });
+  }
+});
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);

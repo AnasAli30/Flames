@@ -55,6 +55,10 @@ const ChatHeader = styled.div`
     padding: 10px 15px;
     min-height: 60px;
   }
+
+  &:hover .panic-btn {
+    display: block;
+  }
 `;
 
 const ChatAvatar = styled.div`
@@ -92,9 +96,12 @@ const ChatName = styled.div`
   font-size: 17px;
   font-weight: 500;
   text-shadow: 0 0 10px rgba(255, 152, 0, 0.3);
-
+  position: relative;
   @media (max-width: 480px) {
     font-size: 15px;
+  }
+  &:hover .panic-btn {
+    display: block;
   }
 `;
 
@@ -352,7 +359,24 @@ const SendButton = styled(Button)`
   }
 `;
 
-const ChatView = ({ activeChat, messages, onSendMessage }) => {
+const PanicButton = styled.button`
+  display: none;
+  position: absolute;
+  right: -90px;
+  top: 0;
+  background: #ff3b3b;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 16px;
+  font-weight: 600;
+  cursor: pointer;
+  z-index: 2;
+`;
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+const ChatView = ({ activeChat, messages, onSendMessage, setChats, setMessagesByChat }) => {
   const [decryptedMessages, setDecryptedMessages] = useState([]);
   const messagesEndRef = useRef(null);
 
@@ -361,7 +385,8 @@ const ChatView = ({ activeChat, messages, onSendMessage }) => {
   });
   const [isDecrypting, setIsDecrypting] = useState(false);
   const [showAll, setShowAll] = useState(false);
-  console.log("chatview messages", messages);
+  const [showPanic, setShowPanic] = useState(false);
+  const panicTimerRef = useRef(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -386,6 +411,13 @@ const ChatView = ({ activeChat, messages, onSendMessage }) => {
     setShowAll(false);
   }, [activeChat?.code]);
 
+  // Show panic button for 3 seconds after hover
+  const handleFlamesHover = () => {
+    setShowPanic(true);
+    if (panicTimerRef.current) clearTimeout(panicTimerRef.current);
+    panicTimerRef.current = setTimeout(() => setShowPanic(false), 3000);
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     const message = e.target.message.value;
@@ -395,13 +427,47 @@ const ChatView = ({ activeChat, messages, onSendMessage }) => {
     }
   };
 
+  // Panic button handler
+  const handlePanic = async () => {
+    if (!window.confirm('Are you sure you want to permanently delete this chat, all its messages, and your account? This cannot be undone.')) return;
+    try {
+      const authState = JSON.parse(localStorage.getItem('authState')) || {};
+      const response = await fetch(`${API_BASE_URL}/panic-delete-chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authState.token}`
+        },
+        body: JSON.stringify({ chatCode: activeChat.code })
+      });
+      console.log("response", response);
+      if (response.status !== 200) {
+        throw new Error('Failed to delete chat and account.');
+      }
+      // Remove chat from UI
+      // setChats([]);
+      // setMessagesByChat({});
+      // Log out and redirect to login
+      localStorage.removeItem('authState');
+      window.location.reload();
+    } catch (err) {
+      console.log("error", err);
+      alert('Failed to delete chat/account. Please try again.');
+    }
+  };
+
   return (
     <ChatViewContainer>
       <ChatHeader>
         <ChatAvatar>{(activeChat?.customName || activeChat?.email || activeChat?.code)?.[0]?.toUpperCase() || '?'}</ChatAvatar>
-        <ChatName>{activeChat?.customName || customNames[activeChat?.code] || activeChat?.email || activeChat?.code || 'Loading...'}</ChatName>
+        <ChatName onMouseEnter={handleFlamesHover}>
+          {activeChat?.customName || customNames[activeChat?.code] || activeChat?.email || activeChat?.code || 'Loading...'}
+          {showPanic && (
+            <PanicButton className="panic-btn" onClick={handlePanic}>Panic!</PanicButton>
+          )}
+        </ChatName>
         {customNames[activeChat?.code] && (
-        <ChatCode>{ activeChat?.code || 'Loading...'}</ChatCode>
+          <ChatCode>{ activeChat?.code || 'Loading...'}</ChatCode>
         )}
       </ChatHeader>
 
