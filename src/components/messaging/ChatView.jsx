@@ -2,6 +2,8 @@ import styled from '@emotion/styled';
 import { Input, Button } from '../../styles/StyledComponents';
 import { useState, useEffect, useRef } from 'react';
 import { toast } from 'react-toastify';
+import { FaTrash } from 'react-icons/fa';
+import CustomPopup from './CustomPopup';
 
 const ChatViewContainer = styled.div`
   flex: 1;
@@ -429,6 +431,7 @@ const ChatView = ({ activeChat, messages, onSendMessage, setChats, setMessagesBy
   const [showAll, setShowAll] = useState(false);
   const [showPanic, setShowPanic] = useState(false);
   const panicTimerRef = useRef(null);
+  const [popupMsg, setPopupMsg] = useState(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -495,6 +498,30 @@ const ChatView = ({ activeChat, messages, onSendMessage, setChats, setMessagesBy
     }
   };
 
+  const handleDeleteMessage = async (msg, deleteForEveryone) => {
+    try {
+      const authState = JSON.parse(localStorage.getItem('authState')) || {};
+      const body = {
+        messageId: msg.id,
+        deleteForEveryone,
+        otherUserCode: deleteForEveryone ? (msg.from === 'me' ? msg.to : msg.from) : undefined
+      };
+      const response = await fetch(`${API_BASE_URL}/delete-message`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authState.token}`
+        },
+        body: JSON.stringify(body)
+      });
+      if (!response.ok) throw new Error('Failed to delete message.');
+      toast.success(deleteForEveryone ? 'Message deleted for everyone.' : 'Message deleted for you.');
+      setDecryptedMessages(msgs => msgs.filter(m => m.id !== msg.id));
+    } catch (err) {
+      toast.error('Failed to delete message.');
+    }
+  };
+
   return (
     <ChatViewContainer>
       <ChatHeader>
@@ -538,6 +565,12 @@ const ChatView = ({ activeChat, messages, onSendMessage, setChats, setMessagesBy
               key={`${msg.timestamp}-${index}`}
               sent={msg.from === 'me'}
               className={shouldBlur ? 'blurred' : ''}
+              onContextMenu={e => {
+                if (msg.from === 'me') {
+                  e.preventDefault();
+                  setPopupMsg(msg);
+                }
+              }}
             >
               {msg.decryptedContent || msg.encryptedMessage}
               <MessageTime>
@@ -563,6 +596,13 @@ const ChatView = ({ activeChat, messages, onSendMessage, setChats, setMessagesBy
           <SendButton type="submit">→</SendButton>
         </InputContainer>
       </form>
+
+      <CustomPopup
+        open={!!popupMsg}
+        onClose={() => setPopupMsg(null)}
+        onDeleteForMe={() => { handleDeleteMessage(popupMsg, false); setPopupMsg(null); }}
+        onDeleteForEveryone={() => { handleDeleteMessage(popupMsg, true); setPopupMsg(null); }}
+      />
     </ChatViewContainer>
   );
 };

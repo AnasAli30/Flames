@@ -1081,7 +1081,7 @@ const App = () => {
     <>
       <FlamesBackground />
       <NotificationSystem />
-      <ToastContainer position="bottom-center" autoClose={3000} />
+      <ToastContainer position="top-right" autoClose={3000} />
       <Container
         style={{
           maxWidth: '100%',

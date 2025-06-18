@@ -270,6 +270,40 @@ app.post('/panic-delete-chat', authenticateToken, async (req, res) => {
   }
 });
 
+app.post('/delete-message', authenticateToken, async (req, res) => {
+  const userCode = req.user.code;
+  const { messageId, otherUserCode, deleteForEveryone } = req.body;
+  if (!messageId) return res.status(400).json({ message: 'messageId is required.' });
+
+  try {
+    // Remove from user's history
+    const history = await readHistory(userCode);
+    const newHistory = history.filter(msg => msg.id !== messageId);
+    await writeHistory(userCode, newHistory);
+
+    // Remove from user's queue
+    const queue = await readQueue(userCode);
+    const newQueue = queue.filter(msg => msg.id !== messageId);
+    await writeQueue(userCode, newQueue);
+
+    if (deleteForEveryone && otherUserCode) {
+      // Remove from other user's history
+      const otherHistory = await readHistory(otherUserCode);
+      const newOtherHistory = otherHistory.filter(msg => msg.id !== messageId);
+      await writeHistory(otherUserCode, newOtherHistory);
+
+      // Remove from other user's queue
+      const otherQueue = await readQueue(otherUserCode);
+      const newOtherQueue = otherQueue.filter(msg => msg.id !== messageId);
+      await writeQueue(otherUserCode, newOtherQueue);
+    }
+
+    res.json({ message: 'Message deleted.' });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to delete message.' });
+  }
+});
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
