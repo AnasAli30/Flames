@@ -218,117 +218,9 @@ const UserCode = styled.div`
   color: #00a884;
 `;
 
-const decryptMessage = async (message) => {
-  try {
-    if (!message || !message.encryptedMessage || !message.encryptedAESKey) {
-      console.error('Invalid message format:', message);
-      return 'Invalid message format';
-    }
-
-    // Safe base64 decoding function
-    const base64ToArray = (base64String) => {
-      try {
-        // Handle PEM format
-        let cleanBase64 = base64String;
-        if (base64String.includes('-----BEGIN')) {
-          // Extract the base64 part from PEM format
-          cleanBase64 = base64String
-            .replace('-----BEGIN PUBLIC KEY-----', '')
-            .replace('-----END PUBLIC KEY-----', '')
-            .replace('-----BEGIN PRIVATE KEY-----', '')
-            .replace('-----END PRIVATE KEY-----', '')
-            .replace(/[\n\r\s]/g, '');
-        } else {
-          // Regular base64 string - just remove whitespace
-          cleanBase64 = base64String.replace(/\s/g, '');
-        }
-
-        // Validate base64 string
-        if (!cleanBase64.match(/^[A-Za-z0-9+/]*={0,2}$/)) {
-          console.error('Invalid base64 format for string:', base64String);
-          throw new Error('Invalid base64 string format');
-        }
-        
-        const binary = window.atob(cleanBase64);
-        const bytes = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i++) {
-          bytes[i] = binary.charCodeAt(i);
-        }
-        return bytes;
-      } catch (error) {
-        console.error('Error in base64ToArray:', error);
-        console.error('Problematic string:', base64String);
-        throw new Error('Failed to decode data');
-      }
-    };
-
-    // Log the received message for debugging
-    console.log('Attempting to decrypt message:', {
-      encryptedMessage: message.encryptedMessage,
-      encryptedAESKey: message.encryptedAESKey
-    });
-
-    // Extract IV and encrypted message
-    const combined = base64ToArray(message.encryptedMessage);
-    const iv = combined.slice(0, 12);
-    const encryptedMessage = combined.slice(12);
-
-    // Get private key
-    const privateKey = authState.user?.privateKey;
-    if (!privateKey) {
-      throw new Error('Private key is missing');
-    }
-
-    // Import private key
-    const privateKeyArray = base64ToArray(privateKey);
-    const importedPrivateKey = await crypto.subtle.importKey(
-      'pkcs8',
-      privateKeyArray,
-      {
-        name: 'RSA-OAEP',
-        hash: 'SHA-256'
-      },
-      false,
-      ['decrypt']
-    );
-
-    // Decrypt the AES key
-    const encryptedAESKey = base64ToArray(message.encryptedAESKey);
-    const aesKey = await crypto.subtle.decrypt(
-      { name: 'RSA-OAEP' },
-      importedPrivateKey,
-      encryptedAESKey
-    );
-
-    // Import the AES key
-    const importedAESKey = await crypto.subtle.importKey(
-      'raw',
-      aesKey,
-      { name: 'AES-GCM' },
-      false,
-      ['decrypt']
-    );
-
-    // Decrypt the message
-    const decryptedMessage = await crypto.subtle.decrypt(
-      { name: 'AES-GCM', iv },
-      importedAESKey,
-      encryptedMessage
-    );
-
-    // Convert decrypted message to text
-    const decoder = new TextDecoder();
-    return decoder.decode(decryptedMessage);
-  } catch (err) {
-    console.error('Error decrypting message:', err);
-    return `Error decrypting message: ${err.message}`;
-  }
-};
-
-const authState = JSON.parse(localStorage.getItem('authState')) || {};
-
-
 const ChatList = ({ chats = [], activeChat, onChatSelect, onStartChat, userCode, error }) => {
+  const [search, setSearch] = useState('');
+
   const getAvatarText = (email) => {
     if (!email) return '?';
     return email[0].toUpperCase();
@@ -353,11 +245,40 @@ const ChatList = ({ chats = [], activeChat, onChatSelect, onStartChat, userCode,
     });
   };
 
+  // Filter chats by search string
+  const filteredChats = chats.filter(chat => {
+    if (!search) return true;
+    const val = search.toLowerCase();
+    return (
+      (chat.email && chat.email.toLowerCase().includes(val)) ||
+      (chat.code && chat.code.toLowerCase().includes(val))
+    );
+  });
+
   return (
     <ChatListContainer>
       <NewChatForm onStartChat={onStartChat} error={error} />
+      <div style={{ padding: '10px 16px' }}>
+        <input
+          type="text"
+          placeholder="Search chats..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          style={{
+            width: '100%',
+            padding: '8px 12px',
+            borderRadius: '8px',
+            border: '1px solid #ff9800',
+            fontSize: '15px',
+            marginBottom: '8px',
+            outline: 'none',
+            background: '#23272f',
+            color: '#fff'
+          }}
+        />
+      </div>
       <ChatListScroll>
-        {Array.isArray(chats) && chats.map(chat => {
+        {Array.isArray(filteredChats) && filteredChats.map(chat => {
           if (!chat || !chat.code) return null;
           return (
             <ChatItem 
@@ -378,9 +299,9 @@ const ChatList = ({ chats = [], activeChat, onChatSelect, onStartChat, userCode,
             </ChatItem>
           );
         })}
-        {(!chats || chats.length === 0) && (
+        {(!filteredChats || filteredChats.length === 0) && (
           <EmptyState>
-            <div>No chats yet. Start a new chat using someone's code!</div>
+            <div>No chats found.</div>
             <div>Your code:</div>
             <UserCode>{userCode}</UserCode>
           </EmptyState>
