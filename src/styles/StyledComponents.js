@@ -60,12 +60,36 @@ export const Container = styled.div`
   width: 100%;
   padding: 20px;
   
-  @media (max-width: 768px) {
-    padding: 15px;
+  /* Large desktop */
+  @media (min-width: 1200px) {
+    max-width: 1600px;
+    padding: 24px;
   }
   
+  /* Desktop */
+  @media (max-width: 1024px) {
+    max-width: 100%;
+    padding: 20px;
+  }
+  
+  /* Tablet */
+  @media (max-width: 768px) {
+    padding: 16px;
+  }
+  
+  /* Mobile landscape */
+  @media (max-width: 640px) {
+    padding: 12px;
+  }
+  
+  /* Mobile portrait */
   @media (max-width: 480px) {
-    padding: 10px;
+    padding: 8px;
+  }
+  
+  /* Ultra small screens */
+  @media (max-width: 320px) {
+    padding: 4px;
   }
 `;
 
@@ -96,6 +120,43 @@ export const Title = styled.h1`
   letter-spacing: 0.2em;
   margin-bottom: 0.2em;
   font-size: 2.2rem;
+  text-align: center;
+  
+  /* Large desktop */
+  @media (min-width: 1200px) {
+    font-size: 3.5rem;
+    letter-spacing: 0.25em;
+  }
+  
+  /* Desktop */
+  @media (max-width: 1024px) {
+    font-size: 2.8rem;
+    letter-spacing: 0.2em;
+  }
+  
+  /* Tablet */
+  @media (max-width: 768px) {
+    font-size: 2.2rem;
+    letter-spacing: 0.15em;
+  }
+  
+  /* Mobile landscape */
+  @media (max-width: 640px) {
+    font-size: 1.8rem;
+    letter-spacing: 0.1em;
+  }
+  
+  /* Mobile portrait */
+  @media (max-width: 480px) {
+    font-size: 1.5rem;
+    letter-spacing: 0.05em;
+  }
+  
+  /* Ultra small screens */
+  @media (max-width: 320px) {
+    font-size: 1.2rem;
+    letter-spacing: 0.02em;
+  }
 `;
 
 export const Subtitle = styled.h2`

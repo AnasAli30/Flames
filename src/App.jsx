@@ -16,8 +16,11 @@ import SignupForm from './components/auth/SignupForm';
 import ChatList from './components/messaging/ChatList';
 import ChatView from './components/messaging/ChatView';
 import LoadingScreen from './components/LoadingScreen';
+import NotificationSystem, { showNotification } from './components/NotificationSystem';
 import { v4 as uuidv4 } from 'uuid';
 import { keyframes } from '@emotion/react';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const ChatContainer = styled.div`
   display: flex;
@@ -55,16 +58,46 @@ const ChatContainer = styled.div`
     animation: ${pulseGlow} 3s ease-in-out infinite;
   }
 
+  /* Large desktop */
+  @media (min-width: 1200px) {
+    max-width: 1600px;
+    height: calc(100vh - 150px);
+  }
+
+  /* Desktop */
+  @media (max-width: 1024px) {
+    max-width: 100%;
+    margin: 20px;
+    height: calc(100vh - 160px);
+  }
+
+  /* Tablet */
   @media (max-width: 768px) {
     flex-direction: column;
-    height: calc(100vh - 120px);
-    margin-top: 10px;
+    height: calc(100vh - 140px);
+    margin: 16px;
     border-radius: 12px;
   }
 
+  /* Mobile landscape */
+  @media (max-width: 640px) {
+    height: calc(100vh - 120px);
+    margin: 12px;
+    border-radius: 10px;
+  }
+
+  /* Mobile portrait */
   @media (max-width: 480px) {
     height: calc(100vh - 100px);
+    margin: 8px;
     border-radius: 8px;
+  }
+
+  /* Ultra small screens */
+  @media (max-width: 320px) {
+    height: calc(100vh - 80px);
+    margin: 4px;
+    border-radius: 6px;
   }
 `;
 
@@ -364,12 +397,12 @@ const App = () => {
     // Initialize app
     const initializeApp = async () => {
       try {
-        // Check for stored auth state
-        const storedAuth = localStorage.getItem('authState');
-        if (storedAuth) {
-          const parsedAuth = JSON.parse(storedAuth);
-          setAuthState(parsedAuth);
-        }
+    // Check for stored auth state
+    const storedAuth = localStorage.getItem('authState');
+    if (storedAuth) {
+      const parsedAuth = JSON.parse(storedAuth);
+      setAuthState(parsedAuth);
+    }
         
         // Simulate loading time for better UX
         await new Promise(resolve => setTimeout(resolve, 2000));
@@ -460,29 +493,29 @@ const App = () => {
             //   console.error('Failed to decrypt message:', msg);
             //   messageContent = '🔒 Encrypted message';
             // }
-
-            // Update chat list
-            if (!chatMap.has(otherUser)) {
-              chatMap.set(otherUser, {
-                code: otherUser,
+          
+          // Update chat list
+          if (!chatMap.has(otherUser)) {
+            chatMap.set(otherUser, {
+              code: otherUser,
                 email: otherUser,
                 lastMessage: messageContent,
-                lastMessageTime: msg.timestamp
-              });
-            } else if (msg.timestamp > chatMap.get(otherUser).lastMessageTime) {
-              const chat = chatMap.get(otherUser);
+              lastMessageTime: msg.timestamp
+            });
+          } else if (msg.timestamp > chatMap.get(otherUser).lastMessageTime) {
+            const chat = chatMap.get(otherUser);
               chat.lastMessage = messageContent;
-              chat.lastMessageTime = msg.timestamp;
-            }
+            chat.lastMessageTime = msg.timestamp;
+          }
 
-            // Group messages by chat
-            if (!msgMap[otherUser]) {
-              msgMap[otherUser] = [];
-            }
+          // Group messages by chat
+          if (!msgMap[otherUser]) {
+            msgMap[otherUser] = [];
+          }
 
             // Store message with proper format
-            msgMap[otherUser].push({
-              ...msg,
+          msgMap[otherUser].push({
+            ...msg,
               from: isSentByMe ? 'me' : msg.from,
               decryptedContent: messageContent,
               timestamp: msg.timestamp || Date.now()
@@ -499,7 +532,7 @@ const App = () => {
         });
 
         // Update state
-        setMessagesByChat(msgMap);
+      setMessagesByChat(msgMap);
         const chatList = Array.from(chatMap.values());
         const chatsWithNames = mergeCustomNames(chatList);
         setChats(chatsWithNames);
@@ -534,6 +567,9 @@ const App = () => {
       setAuthState(newAuthState);
       localStorage.setItem('authState', JSON.stringify(newAuthState));
       setError('');
+      
+      // Show success notification
+      showNotification('success', `Welcome back, ${result.user.code}! 🔥`, 3000);
 
       // Initialize chat state
       setChats([]);
@@ -562,6 +598,7 @@ const App = () => {
         throw new Error(result.message);
       }
 
+      showNotification('success', `Account created successfully! Welcome to Flames! 🎉`, 4000);
       await handleLogin({ code: result.code, password: data.password });
       setError('');
     } catch (err) {
@@ -838,10 +875,10 @@ const App = () => {
         const newMessages = {};
         for (const msg of result.messages) {
           try {
-            const chatId = msg.from;
-            if (!newMessages[chatId]) {
-              newMessages[chatId] = [];
-            }
+          const chatId = msg.from;
+          if (!newMessages[chatId]) {
+            newMessages[chatId] = [];
+          }
 
             // Validate message format
             if (!msg.encryptedMessage || !msg.encryptedAESKey) {
@@ -856,8 +893,8 @@ const App = () => {
               continue;
             }
 
-            newMessages[chatId].push({
-              ...msg,
+          newMessages[chatId].push({
+            ...msg,
               from: msg.from,
               decryptedContent: decryptedMessage,
               originalEncryptedMessage: msg.encryptedMessage
@@ -890,21 +927,21 @@ const App = () => {
           const updated = [...prev];
           Object.entries(newMessages).forEach(([chatId, messages]) => {
             if (messages.length > 0) {
-              const latestMessage = messages[messages.length - 1];
-              const chatIndex = updated.findIndex(chat => chat.code === chatId);
-              if (chatIndex !== -1) {
-                updated[chatIndex] = {
-                  ...updated[chatIndex],
+            const latestMessage = messages[messages.length - 1];
+            const chatIndex = updated.findIndex(chat => chat.code === chatId);
+            if (chatIndex !== -1) {
+              updated[chatIndex] = {
+                ...updated[chatIndex],
                   lastMessage: latestMessage.decryptedContent,
-                  lastMessageTime: latestMessage.timestamp
-                };
-              } else {
-                updated.push({
-                  code: chatId,
-                  email: chatId,
+                lastMessageTime: latestMessage.timestamp
+              };
+            } else {
+              updated.push({
+                code: chatId,
+                email: chatId,
                   lastMessage: latestMessage.decryptedContent,
-                  lastMessageTime: latestMessage.timestamp
-                });
+                lastMessageTime: latestMessage.timestamp
+              });
               }
             }
           });
@@ -1043,6 +1080,8 @@ const App = () => {
   return (
     <>
       <FlamesBackground />
+      <NotificationSystem />
+      <ToastContainer position="bottom-center" autoClose={3000} />
       <Container
         style={{
           maxWidth: '100%',
@@ -1109,7 +1148,7 @@ const App = () => {
             </div>
           )}
         </Header>
-  
+        
         {!authState.isAuthenticated ? (
           <>
             {isLogin ? (
@@ -1121,9 +1160,9 @@ const App = () => {
               <a
                 href="#"
                 onClick={(e) => {
-                  e.preventDefault();
-                  setIsLogin(!isLogin);
-                  setError('');
+                e.preventDefault();
+                setIsLogin(!isLogin);
+                setError('');
                 }}
                 style={{
                   color: '#00a884',
@@ -1161,14 +1200,15 @@ const App = () => {
               backdropFilter: 'blur(10px)',
               borderRight: '1px solid rgba(255, 255, 255, 0.1)'
             }}>
-              <ChatList
-                chats={chats}
-                activeChat={activeChat}
-                onChatSelect={setActiveChat}
-                onStartChat={handleStartChat}
-                userCode={authState.user?.code}
-                error={chatError}
-              />
+            <ChatList 
+              chats={chats}
+              activeChat={activeChat}
+                setActiveChat={setActiveChat}
+              onChatSelect={setActiveChat}
+              onStartChat={handleStartChat}
+              userCode={authState.user?.code}
+              error={chatError}
+            />
             </div>
             {activeChat ? (
               <ChatView

@@ -252,7 +252,7 @@ const UserCode = styled.div`
   color: #00a884;
 `;
 
-const ChatList = ({ chats = [], activeChat, onChatSelect, onStartChat, userCode, error }) => {
+const ChatList = ({ chats = [], activeChat, setActiveChat, onChatSelect, onStartChat, userCode, error }) => {
   const [search, setSearch] = useState('');
   const [customNames, setCustomNames] = useState(() => {
     return JSON.parse(localStorage.getItem('chatCustomNames') || '{}');
@@ -314,6 +314,10 @@ const ChatList = ({ chats = [], activeChat, onChatSelect, onStartChat, userCode,
     setCustomNames(prev => ({ ...prev, [chat.code]: editValue.trim() }));
     setEditingChat(null);
     setEditValue('');
+    // If the edited chat is the active chat, update its customName immediately
+    if (activeChat && activeChat.code === chat.code && setActiveChat) {
+      setActiveChat({ ...activeChat, customName: editValue.trim() });
+    }
   };
   const cancelEdit = () => {
     setEditingChat(null);

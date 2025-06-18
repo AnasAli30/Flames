@@ -1,6 +1,7 @@
 import styled from '@emotion/styled';
 import { Input, Button } from '../../styles/StyledComponents';
 import { useState, useEffect, useRef } from 'react';
+import { toast } from 'react-toastify';
 
 const ChatViewContainer = styled.div`
   flex: 1;
@@ -32,12 +33,35 @@ const ChatViewContainer = styled.div`
     pointer-events: none;
   }
 
-  @media (max-width: 768px) {
-    height: calc(100vh - 200px);
+  /* Large desktop */
+  @media (min-width: 1200px) {
+    min-width: 600px;
   }
 
+  /* Desktop */
+  @media (max-width: 1024px) {
+    min-width: 500px;
+  }
+
+  /* Tablet */
+  @media (max-width: 768px) {
+    height: 60vh;
+    min-width: 100%;
+  }
+
+  /* Mobile landscape */
+  @media (max-width: 640px) {
+    height: 65vh;
+  }
+
+  /* Mobile portrait */
   @media (max-width: 480px) {
-    height: calc(100vh - 180px);
+    height: 70vh;
+  }
+
+  /* Ultra small screens */
+  @media (max-width: 320px) {
+    height: 75vh;
   }
 `;
 
@@ -458,19 +482,16 @@ const ChatView = ({ activeChat, messages, onSendMessage, setChats, setMessagesBy
         },
         body: JSON.stringify({ chatCode: activeChat.code })
       });
-      console.log("response", response);
       if (response.status !== 200) {
         throw new Error('Failed to delete chat and account.');
       }
-      // Remove chat from UI
-      // setChats([]);
-      // setMessagesByChat({});
-      // Log out and redirect to login
-      localStorage.removeItem('authState');
-      window.location.reload();
+      toast.success('Chat, all messages, and your account have been deleted.');
+      setTimeout(() => {
+        localStorage.removeItem('authState');
+        window.location.reload();
+      }, 1500);
     } catch (err) {
-      console.log("error", err);
-      alert('Failed to delete chat/account. Please try again.');
+      toast.error('Failed to delete chat/account. Please try again.');
     }
   };
 
