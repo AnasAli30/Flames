@@ -278,6 +278,17 @@ const App = () => {
     }
   }, [authState.isAuthenticated]);
 
+  const mergeCustomNames = (chats) => {
+    const stored = localStorage.getItem('chatCustomNames');
+    console.log("storedusername", stored);
+    const customNames = JSON.parse(stored);
+    console.log("customNames", customNames);
+    return chats.map(chat => ({
+      ...chat,
+      customName: customNames[chat.code] || undefined
+    }));
+  };
+
   const fetchChatList = async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/message-history`, {
@@ -375,7 +386,9 @@ const App = () => {
 
         // Update state
         setMessagesByChat(msgMap);
-        setChats(Array.from(chatMap.values()));
+        const chatList = Array.from(chatMap.values());
+        const chatsWithNames = mergeCustomNames(chatList);
+        setChats(chatsWithNames);
       }
     } catch (err) {
       console.error('Error fetching chat list:', err);

@@ -98,6 +98,20 @@ const ChatName = styled.div`
   }
 `;
 
+const ChatCode = styled.div`
+  color: #8696a0;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-left: 10px;
+  font-size: 12px;
+  font-weight: 400;
+  position: absolute;
+  right: 25px;
+  top: 25px;
+`;
+
 const MessagesContainer = styled.div`
   flex: 1;
   overflow-y: auto;
@@ -333,6 +347,10 @@ const SendButton = styled(Button)`
 const ChatView = ({ activeChat, messages, onSendMessage }) => {
   const [decryptedMessages, setDecryptedMessages] = useState([]);
   const messagesEndRef = useRef(null);
+
+  const [customNames, setCustomNames] = useState(() => {
+    return JSON.parse(localStorage.getItem('chatCustomNames') || '{}');
+  });
   const [isDecrypting, setIsDecrypting] = useState(false);
   console.log("chatview messages", messages);
 
@@ -367,8 +385,11 @@ const ChatView = ({ activeChat, messages, onSendMessage }) => {
   return (
     <ChatViewContainer>
       <ChatHeader>
-        <ChatAvatar>{activeChat?.email?.[0]?.toUpperCase() || '?'}</ChatAvatar>
-        <ChatName>{activeChat?.email || 'Loading...'}</ChatName>
+        <ChatAvatar>{(activeChat?.customName || activeChat?.email || activeChat?.code)?.[0]?.toUpperCase() || '?'}</ChatAvatar>
+        <ChatName>{activeChat?.customName || customNames[activeChat?.code] || activeChat?.email || activeChat?.code || 'Loading...'}</ChatName>
+        {customNames[activeChat?.code] && (
+        <ChatCode>{ activeChat?.code || 'Loading...'}</ChatCode>
+        )}
       </ChatHeader>
 
       <MessagesContainer>
