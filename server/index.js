@@ -152,21 +152,36 @@ app.post('/send-message', authenticateToken, async (req, res) => {
   }
   const users = await readUsers();
   if (!users[to]) return res.status(404).json({ message: 'Recipient not found.' });
-  const queue = await readQueue(to);
-  const history = await readHistory(to);
-  const msg = { from, encryptedMessage, encryptedAESKey, timestamp: Date.now() };
-  queue.push(msg);
-  history.push(msg);
-  await writeQueue(to, queue);
-  await writeHistory(to, history);
-  res.json({ message: 'Message sent.' });
+  
+  const msg = { 
+    from, 
+    to,
+    encryptedMessage, 
+    encryptedAESKey, 
+    timestamp: Date.now() 
+  };
+
+  // Add to recipient's queue and history
+  const recipientQueue = await readQueue(to);
+  const recipientHistory = await readHistory(to);
+  recipientQueue.push(msg);
+  recipientHistory.push(msg);
+  await writeQueue(to, recipientQueue);
+  await writeHistory(to, recipientHistory);
+
+  // Add to sender's history
+  const senderHistory = await readHistory(from);
+  senderHistory.push(msg);
+  await writeHistory(from, senderHistory);
+
+  res.json({ message: 'Message sent.', msg });
 });
 
 // Fetch messages endpoint
 app.get('/fetch-messages', authenticateToken, async (req, res) => {
   const code = req.user.code;
   const queue = await readQueue(code);
-  console.log(queue);
+  console.log('Fetching messages for user:', code, 'Queue:', queue);
   await writeQueue(code, []); // clear queue after fetching
   res.json({ messages: queue });
 });
@@ -183,6 +198,11 @@ app.get('/public-key/:code', async (req, res) => {
 app.get('/message-history', authenticateToken, async (req, res) => {
   const code = req.user.code;
   const history = await readHistory(code);
+  console.log('Fetching history for user:', code, 'History length:', history.length);
+  
+  // Sort messages by timestamp
+  history.sort((a, b) => a.timestamp - b.timestamp);
+  
   res.json({ messages: history });
 });
 

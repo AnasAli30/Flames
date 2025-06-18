@@ -28,5 +28,11 @@
     "encryptedMessage": "E0rVdZ4ARpYE7+bppVrWwX3T/OM7rwUPmhiyQNdgk70=",
     "encryptedAESKey": "M8NG5tBh7AKLIOW6ECo44VNghR1mrfYNlwIBVUuJQjNGsy/64cYAea2wYBaYy0oqnsqgrUH5HX2lJX1rXy35bLjBDM2d/izJW8VF0Ew8yEZO56Vxh7QOdmdMnbAV88Kp6XcWdWNhSkdEPHdxzMUdvGdqACZkeIE5rUWc6tm2DdDT7/frgdiThaGWRL2uaxGscjhqcaTnHX+RBPGuV1yDP/coQJigtX/7+nSwVvItK5bahyTbPOdLzn2fSAgCdw+8xqlrMgeIqfVEsV/eCL+LIcjM7Ay8zaFJstIxXZQ9O8sf5Uif6CGsdcZ8Se0MT6titHWbKaonn7zb4Cbrjqhwew==",
     "timestamp": 1747641287140
+  },
+  {
+    "from": "41d1b668",
+    "encryptedMessage": "asad",
+    "encryptedAESKey": "dummy-key",
+    "timestamp": 1750251568806
   }
 ]
